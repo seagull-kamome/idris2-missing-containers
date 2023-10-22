@@ -1,4 +1,4 @@
-package idris2-missing-containers-test
+package missing-containers-test
 version = 0.1.0
 authors = "HIROKI, Hattori"
 -- maintainers =
@@ -14,7 +14,7 @@ langversion >= 0.5.1
 
 -- packages to add to search path
 depends
-    = idris2-missing-containers
+    = missing-containers
     , hashable >= 0.1.0
 
 -- modules to install

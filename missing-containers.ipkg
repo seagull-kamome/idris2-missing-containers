@@ -1,4 +1,4 @@
-package idris2-missing-containers
+package missing-containers
 version = 0.1.0
 authors = "HIROKI, Hattori"
 -- maintainers =
