@@ -1,0 +1,10 @@
+[custom.all.idris2-missing-containers]
+type = "local"
+path = "."
+ipkg = "idris2-missing-containers.ipkg"
+test = "test/test.ipkg"
+
+[custom.all.idris2-missing-containers-test]
+type = "local"
+path = "test"
+ipkg = "test.ipkg"
