@@ -27,7 +27,7 @@ jobs:
           node-version: '16.x'
 
       - name: apt-get dependencies
-        run: apt-get install clang gcc
+        run: apt-get install clang-14 gcc
 
       - name: Checkout
         uses: actions/checkout@v3
