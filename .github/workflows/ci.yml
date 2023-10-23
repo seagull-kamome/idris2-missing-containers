@@ -1,0 +1,43 @@
+name: AnyCommit
+on:
+  push:
+    branches:
+      - '**'
+    tags:
+      - '**'
+  pull_request:
+    branches:
+      - $default-branch
+
+env:
+  SCHEME: scheme
+  IDRIS2_TESTS_CG: chez
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      IDRIS2_CC: gcc
+      PACK_DIR: /root/.pack
+    container: ghcr.io/stefan-hoeck/idris2-pack:latest    
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16.x'
+      - name: Setup dependencies
+        run: |
+          sudo apt-get -y install gcc clang
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - run: idris2 --version
+      - run: pack install-deps missing-container
+      - run: pack build missing-container
+      - run: IDRIS2_CG=chez pack test  missing-container
+      - run: IDRIS2_CG=refc IDRIS2_CC=gcc pack test  missing-container
+      - run: IDRIS2_CG=refc IDRIS2_CC=clang pack test  missing-container
+      - run: IDRIS2_CG=node pack test  missing-container
+      - run: pack install missing-container
+
