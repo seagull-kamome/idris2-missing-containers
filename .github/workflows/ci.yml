@@ -25,9 +25,11 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: '16.x'
-      - name: Setup dependencies
+
+      - name: apt-get dependencies
         run: |
-          sudo apt-get -y install gcc clang
+          apt-get update
+          apt-get install -y clang-14 gcc
 
       - name: Checkout
         uses: actions/checkout@v3
