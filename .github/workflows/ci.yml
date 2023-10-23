@@ -29,7 +29,7 @@ jobs:
       - name: apt-get dependencies
         run: |
           apt-get update
-          apt-get install clang-14 gcc
+          apt-get install -y clang-14 gcc
 
       - name: Checkout
         uses: actions/checkout@v3
