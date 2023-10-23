@@ -25,9 +25,10 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: '16.x'
-      - name: Setup dependencies
-        run: |
-          sudo apt-get -y install gcc clang
+      - name: Setup LLVM and clang
+        uses: KyleMayes/install-llvm-action@v1
+        with:
+          version: "14.0"
 
       - name: Checkout
         uses: actions/checkout@v3
