@@ -33,11 +33,11 @@ jobs:
         uses: actions/checkout@v3
 
       - run: idris2 --version
-      - run: pack install-deps missing-container
-      - run: pack build missing-container
-      - run: IDRIS2_CG=chez pack test  missing-container
-      - run: IDRIS2_CG=refc IDRIS2_CC=gcc pack test  missing-container
-      - run: IDRIS2_CG=refc IDRIS2_CC=clang pack test  missing-container
-      - run: IDRIS2_CG=node pack test  missing-container
-      - run: pack install missing-container
+      - run: pack install-deps missing-containers
+      - run: pack build missing-containers
+      - run: IDRIS2_CG=chez pack test  missing-containers
+      - run: IDRIS2_CG=refc IDRIS2_CC=gcc pack test  missing-containers
+      - run: IDRIS2_CG=refc IDRIS2_CC=clang pack test  missing-containers
+      - run: IDRIS2_CG=node pack test  missing-containers
+      - run: pack install missing-containers
 
