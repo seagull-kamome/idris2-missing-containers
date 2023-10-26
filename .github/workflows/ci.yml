@@ -29,7 +29,7 @@ jobs:
       - name: apt-get dependencies
         run: |
           apt-get update
-          apt-get install -y clang-10 clang-11 clang-13 clang-14 clang-15 gcc
+          apt-get install -y clang-14 clang-15 gcc
 
       - name: Checkout
         uses: actions/checkout@v3
@@ -39,9 +39,7 @@ jobs:
       - run: pack build missing-containers
       - run: IDRIS2_CG=chez pack test  missing-containers
       - run: IDRIS2_CG=refc IDRIS2_CC=gcc pack test  missing-containers
-      - run: IDRIS2_CG=refc IDRIS2_CC=clang-10 pack test  missing-containers
-      - run: IDRIS2_CG=refc IDRIS2_CC=clang-11 pack test  missing-containers
-      - run: IDRIS2_CG=refc IDRIS2_CC=clang-13 pack test  missing-containers
+      - run: IDRIS2_CG=refc IDRIS2_CC=clang-14 pack test  missing-containers
       - run: IDRIS2_CG=refc IDRIS2_CC=clang-15 pack test  missing-containers
       - run: IDRIS2_CG=node pack test  missing-containers
       - run: pack install missing-containers
