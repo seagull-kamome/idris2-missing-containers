@@ -22,17 +22,18 @@ newIODIntMap = pure $ MkIODIntMap !(newIODHashMap' cast)
 
 
 public export read : HasIO io =>
-  (i:Int) -> {f:Int -> Type} -> IODIntMap f -> io (Maybe (f i))
-read i arr = lookup i arr.hashmap
+  {f:Int -> Type} -> IODIntMap f -> (i:Int) -> io (Maybe (f i))
+read arr i = lookup arr.hashmap i
 
 
 public export write : HasIO io =>
-  (i:Int) -> {f:Int -> Type} -> (v:f i) -> IODIntMap f -> io (Maybe (f i))
-write i v arr = modify i (\x => pure (x, Just v)) arr.hashmap
+  {f:Int -> Type} -> IODIntMap f -> (i:Int) -> (v:f i) ->
+  io (Maybe (f i))
+write arr i v = modify arr.hashmap i (\x => pure (x, Just v))
 
 
 public export remove : HasIO io =>
-  (i:Int) -> {f:Int -> Type} -> IODIntMap f -> io (Maybe (f i))
-remove i arr = remove i arr.hashmap
+  {f:Int -> Type} -> IODIntMap f -> (i:Int) -> io (Maybe (f i))
+remove arr i = remove arr.hashmap i
 
 
