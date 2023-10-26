@@ -17,9 +17,11 @@ depends
 
 -- modules to install
 modules
-    = Data.Container.IOHashMap
+    = Data.Container.IODArray
+    , Data.Container.Internal.IOHashSet
+    , Data.Container.IOHashSet
+    , Data.Container.IOHashMap
     , Data.Container.IOIntMap
-    , Data.Container.IODArray
 
 
 -- main file (i.e. file to load at REPL)
