@@ -1,4 +1,4 @@
-master: ![workflow/CI](https://github.com/github/docs/actions/workflows/ci.yml/badge.svg?branch=master)
+master: ![workflow/CI](https://github.com/seagull-kamome/idris2-missing-containers/actions/workflows/ci.yml/badge.svg?branch=master)
 
 # idris2-missing-containers
 
