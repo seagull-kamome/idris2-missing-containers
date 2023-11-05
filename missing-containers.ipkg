@@ -22,6 +22,7 @@ modules
     , Data.Container.IOHashSet
     , Data.Container.IOHashMap
     , Data.Container.IOIntMap
+    , Data.Container.IOIntSet
 
 
 -- main file (i.e. file to load at REPL)

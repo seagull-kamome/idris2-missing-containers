@@ -16,12 +16,12 @@ testHashMap = do
   putStr "> "
   --
   hm <- newIODHashMap {tv=(const String)}
-  _ <- insert hm "abc" "ABC"
-  _ <- insert hm "def" "DEF"
+  _ <- write hm "abc" "ABC"
+  _ <- write hm "def" "DEF"
   --
-  assertEq (Just "ABC") !(lookup hm "abc")
-  assertEq (Just "DEF") !(lookup hm "def")
-  assertEq Nothing !(lookup hm "zzz")
+  assertEq (Just "ABC") !(read hm "abc")
+  assertEq (Just "DEF") !(read hm "def")
+  assertEq Nothing !(read hm "zzz")
   putStrLn ""
 
 

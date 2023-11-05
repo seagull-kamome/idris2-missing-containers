@@ -1,3 +1,8 @@
+-- Internal implimentations of sparse array based containers.
+-- 
+-- Copyright 2023, HATTORI, Hiroki
+-- This file is released under the MIT license, see LICENSE for more detail.  
+--
 module Data.Container.Internal.IOHashSet
 
 import Decidable.Equality
