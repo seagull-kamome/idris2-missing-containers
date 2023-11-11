@@ -52,8 +52,7 @@ newIOHashSet' hashfunc =
 ||| @k Search key
 ||| @g 検索結果を受け取り、その後の処理方を返すコールバック関数
 ||| @hs Target HashSet
-public export
-runIOHashSet : HasIO io => {0 r:Type} ->
+public export runIOHashSet : HasIO io => {0 r:Type} ->
   {0 tk:Type} -> {0 t:Type} ->
   IsHashSet' (IOHashSet' tk t) tk t =>
   (hs:IOHashSet' tk t) ->
@@ -112,3 +111,87 @@ runIOHashSet hs k g = do
             | r@(_, Nothing) => pure r
           pure (r, Just (x::zs))
 
+
+-- --------------------------------------------------------------------------
+
+public export updateIOHashSet: HasIO io =>
+  {0 tk:Type} -> {0 t:Type} ->
+  IsHashSet' (IOHashSet' tk t) tk t =>
+  (hs:IOHashSet' tk t) ->
+  (visit: (orig:t) -> io ((new:t ** keyfunc hs orig = keyfunc hs new))) ->
+  io ()
+updateIOHashSet hs visit = for_ [0..(L0Width - 1)] $ \ix0 => do
+  Just l1arr <- primIO $ prim__arrayGet hs.root ix0
+    | Nothing => pure ()
+  for_ [0..(L1Width - 1)] $ \ix1 => do
+    primIO $ prim__arraySet l1arr ix1
+       !(for !(primIO $ prim__arrayGet l1arr ix1)
+              $ \x => pure $ fst !(visit x))
+
+-- --------------------------------------------------------------------------
+
+public export clear: HasIO io => (hs:IOHashSet' tk t) -> io ()
+clear hs = for_ [0..(L0Width - 1)] $ \ix =>
+  primIO $ prim__arraySet hs.root ix Nothing
+
+
+-- --------------------------------------------------------------------------
+
+public export filterIOHashSet: HasIO io =>
+  {0 tk:Type} -> {0 t:Type} ->
+  IsHashSet' (IOHashSet' tk t) tk t =>
+  (hs:IOHashSet' tk t) -> (pred: t -> io Bool) -> io ()
+filterIOHashSet hs pred = for_ [0..L0Width] $ \ix0 => do
+  Just l1arr <- primIO $ prim__arrayGet hs.root ix0
+    | Nothing => pure ()
+  for_ [0..L1Width] $ \ix1 =>
+    primIO $ prim__arraySet l1arr ix1
+      !(foldlM (\acc, e => pure $ if !(pred e) then (e::acc) else acc) []
+              !(primIO $ prim__arrayGet l1arr ix1) )
+
+-- --------------------------------------------------------------------------
+
+public export foldIOHashSet: HasIO io => 
+  {0 tk:Type} -> {0 t:Type} ->
+  (hs:IOHashSet' tk t) ->
+  (visit:acc -> t -> io (Bool, acc)) -> acc -> io acc
+foldIOHashSet hs visit x = loop0 L0Width x
+  where
+    loop2: List t -> acc -> io (Bool, acc)
+    loop2 [] x = pure (True, x)
+    loop2 (y::ys) x = do
+      (True, x') <- visit x y | (_, x') => pure (False, x')
+      loop2 ys x'
+
+    loop1: ArrayData (List t) -> Int -> acc -> io (Bool, acc)
+    loop1 _ 0 x = pure (True, x)
+    loop1 l1arr ix1 x = do
+        let ix = ix1 - 1
+        ys <- primIO $ prim__arrayGet l1arr ix
+        (True, x') <- loop2 ys x | (_, x') => pure (False, x')
+        assert_total $ loop1 l1arr ix1 x'
+
+    loop0: Int -> acc -> io acc
+    loop0 0 x = pure x
+    loop0 ix0 x = do
+        let ix = ix0 - 1
+        Just l1arr <- primIO $ prim__arrayGet hs.root ix
+          | Nothing => assert_total $ loop0 ix x
+        (True, x') <- loop1 l1arr L1Width x | (_, x') => pure x'
+        assert_total $ loop0 ix x'
+
+public export %inline count: HasIO io =>
+  (hs:IOHashSet' tk t) -> io Int
+count hs = foldIOHashSet hs (\acc, _ => pure (True, acc + 1)) 0
+
+
+public export %inline keyList: HasIO io =>
+ IsHashSet' (IOHashSet' tk t) tk t => (hs:IOHashSet' tk t) -> io (List tk)
+keyList hs = foldIOHashSet hs (\acc, x => pure (True, keyfunc hs x::acc)) []
+
+
+public export %inline toList: HasIO io => (hs:IOHashSet' tk t) -> io (List t)
+toList hs = foldIOHashSet hs (\acc, x => pure (True, x::acc)) []
+
+
+-- --------------------------------------------------------------------------
