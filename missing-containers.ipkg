@@ -1,5 +1,5 @@
 package missing-containers
-version = 0.1.0
+version = 0.2.0
 authors = "HIROKI, Hattori"
 -- maintainers =
 license = "MIT"
@@ -9,7 +9,7 @@ brief = "Containner librariy of Idris2"
 -- sourceloc =
 -- bugtracker =
 
-langversion >= 0.5.1
+langversion >= 0.7.0
 
 -- packages to add to search path
 depends
