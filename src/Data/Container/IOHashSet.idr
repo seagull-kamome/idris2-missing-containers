@@ -7,7 +7,6 @@ module Data.Container.IOHashSet
 
 import Data.Maybe
 import Decidable.Equality
-import Data.Hashable
 
 import Data.Container.Internal.IOHashSet
 
@@ -23,9 +22,9 @@ record IOHashSet t where
 DecEq t => IsHashSet' (IOHashSet' t t) t t where
   keyfunc _ = id
 
-public export %inline newIOHashSet : HasIO io => Hashable t => DecEq t =>
- io (IOHashSet t)
-newIOHashSet = pure $ MkIOHashSet !(newIOHashSet' (cast . hash))
+public export %inline newIOHashSet :
+  HasIO io => DecEq t => (t -> Bits32) -> io (IOHashSet t)
+newIOHashSet hf = pure $ MkIOHashSet !(newIOHashSet' hf)
 
 
 public export %inline read: HasIO io => DecEq t => IOHashSet t -> t -> io Bool
@@ -61,7 +60,4 @@ except lhs rhs = filterIOHashSet lhs.table (read rhs >=> pure . not)
 
 public export %inline fold: HasIO io => DecEq t => 
   IOHashSet t -> (acc -> t -> io acc) -> acc -> io acc
-fold hm f = foldIOHashSet hm.table $ \acc', e => pure (True, !(f acc' e))
-
--- --------------------------------------------------------------------------
-
+fold hm f acc = foldIOHashSet hm.table (\acc', e => pure (True, !(f acc' e))) acc

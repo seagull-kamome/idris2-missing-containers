@@ -21,7 +21,7 @@ record IODIntMap (f:Int -> Type) where
   table: IODHashMap Int f
 
 public export %inline newIODIntMap: HasIO io => {0 f:Int -> Type} -> io (IODIntMap f)
-newIODIntMap = pure $ MkIODIntMap $ !(newIODHashMap' cast)
+newIODIntMap = pure $ MkIODIntMap $ !(newIODHashMap cast)
 
 
 public export %inline read: HasIO io =>

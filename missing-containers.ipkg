@@ -13,7 +13,7 @@ langversion >= 0.5.1
 
 -- packages to add to search path
 depends
-    = hashable >= 0.1.0
+    = contrib
 
 -- modules to install
 modules
@@ -23,6 +23,11 @@ modules
     , Data.Container.IOHashMap
     , Data.Container.IOIntMap
     , Data.Container.IOIntSet
+    , Data.Hash.Algorithm
+    , Data.Hash.Algorithm.Internal
+    , Data.Hash.Algorithm.OneAtATime
+    , Data.Hash.Algorithm.FNV
+    , Data.Hash.Algorithm.MurMur3
 
 
 -- main file (i.e. file to load at REPL)

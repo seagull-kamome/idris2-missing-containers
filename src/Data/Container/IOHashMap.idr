@@ -10,8 +10,8 @@ import Data.Container.Internal.IOHashSet
 import Decidable.Equality
 import Data.List
 import Data.Maybe
-import Data.Hashable
 import Data.IOArray.Prims
+import Data.Hash.Algorithm
 -- import Data.List.Lazy {- package:contrib -}
 
 %default total
@@ -35,16 +35,17 @@ record IODHashMap (tk:Type) (tv:tk -> Type) where
 
 ||| Create new IODHashMap with specified hash function.
 ||| @hf is hash function to calc. hash value of key.
-public export %inline newIODHashMap' : HasIO io => DecEq tk =>
+public export %inline newIODHashMap : HasIO io => DecEq tk =>
   (hf:tk -> Bits32) -> io (IODHashMap tk tv)
-newIODHashMap' hf = pure $ MkIODHashMap !(newIOHashSet' {tk=tk} hf)
+newIODHashMap hf = pure $ MkIODHashMap !(newIOHashSet' {tk=tk} hf)
 
 
-||| Create new IODHashMap with default hash function
-||| The key type must impliments Hashable interface.
-public export %inline newIODHashMap : HasIO io => Hashable tk => DecEq tk =>
-  io (IODHashMap tk tv)
-newIODHashMap = newIODHashMap' (cast . hash)
+-- public export %inline newIODHashMap :
+--   HasIO io => DecEq tk =>
+--   HashAlgorithm algo crypt Bits32 =>
+--   Hashable tk =>
+--   algo -> io (IODHashMap tk tv)
+-- newIODHashMap seed = newIODHashMap' (\x => finalize $ hash x seed)
 
 
 ||| Insert key-value pair into HashMap
@@ -184,11 +185,11 @@ fold hm f = foldIOHashSet hm.table $ \acc', e => pure (True, !(f acc' e))
 public export %inline IOHashMap : (tk:Type) -> (tv:Type) -> Type
 IOHashMap tk tv = IODHashMap tk (const tv)
 
-public export %inline newIOHashMap' : HasIO io => DecEq tk =>
+public export %inline newIOHashMap : HasIO io => DecEq tk =>
   (hf:tk -> Bits32) -> io (IOHashMap tk tv)
-newIOHashMap' = newIODHashMap'
-
-public export %inline newIOHashMap : HasIO io => Hashable tk => DecEq tk =>
-  io (IOHashMap tk tv)
 newIOHashMap = newIODHashMap
+
+-- public export %inline newIOHashMap : HasIO io => Hashable tk => DecEq tk =>
+--   io (IOHashMap tk tv)
+-- newIOHashMap = newIODHashMap
 
