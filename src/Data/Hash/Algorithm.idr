@@ -13,6 +13,8 @@ import Data.Bits
 
 export
 interface HashAlgorithm (0 algo:Type) (0 crypt:Bool) (0 ty:Type) | algo where
+  ||| Retrieve final hash value from the state.
+  ||| algo : the hash state.
   export finalize : algo -> ty
   --
   feed8 : algo -> Bits8 -> algo
@@ -25,6 +27,9 @@ interface HashAlgorithm (0 algo:Type) (0 crypt:Bool) (0 ty:Type) | algo where
 
 public export
 interface Hashable (0 a:Type) where
+  ||| Feed a next value to hash state.
+  ||| akgo : the hash state.
+  ||| a : a value to feed.
   feed : HashAlgorithm algo crypt ty => algo -> a -> algo
 
 infixl 8 `feed`
@@ -57,6 +62,15 @@ Hashable Integer where
                  (feed64 h $ cast {to=Bits64} $ x .&. cail)
          else feed64 h $ cast {to=Bits64} x
 
+
+||| Calculate hash value with specified algorithm.
+||| algo : Hash algorithm
+||| a : the value to calculate a hash value.
+|||
+||| see implementation file for more information of the algorithm.
+|||
+||| >>> hash MurMur3.empty [1,2,3,4,5]
+|||
 public export hash : HashAlgorithm algo _ ty => Hashable a => algo -> a -> ty
 hash h a = finalize $ feed h a
 

@@ -3,10 +3,11 @@ module Main
 import Data.String
 import Data.IORef
 import Decidable.Equality
-import Data.Hashable
+import Data.Bits
 import Data.Container.IOHashMap
 import Data.Hash.Algorithm.MurMur3
 import Data.Hash.Algorithm.OneAtATime
+import Data.Hash.Algorithm.Sip
 
 import System.File
 import System.Clock
@@ -55,7 +56,7 @@ partial
 benchmarkHashMap : IO ()
 benchmarkHashMap = do
   putStrLn "# benchmarkHashMap"
-  hm <- newIOHashMap (hash OneAtATime.empty)
+  hm <- newIOHashMap (cast . hash (newSipHash 0 0)) -- (hash OneAtATime.empty)
   --
   dict <- do
     Right h <- openFile "test/input_large" Read

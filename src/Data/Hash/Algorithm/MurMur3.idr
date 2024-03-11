@@ -1,3 +1,10 @@
+-- Implementation of MurMur3 Hash Algorithm.
+--  See reference implementaion
+--      https://en.wikipedia.org/wiki/MurmurHash
+--
+-- Copyright 2024, Hattori, Hiroki
+-- This file is released under the MIT license, see LICENSE for more detail.
+--
 module Data.Hash.Algorithm.MurMur3
 
 import public Data.Hash.Algorithm
