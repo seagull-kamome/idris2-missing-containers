@@ -1,3 +1,10 @@
+-- Implementation of OneAtATime Hash Algorithm.
+--  See reference implementaion
+--      https://en.wikipedia.org/wiki/Jenkins_hash_function
+--
+-- Copyright 2024, Hattori, Hiroki
+-- This file is released under the MIT license, see LICENSE for more detail.
+--
 module Data.Hash.Algorithm.OneAtATime
 
 import public Data.Hash.Algorithm

@@ -7,6 +7,18 @@ import Data.Bits
 
 -- ----------------------------------------------------------------------------
 
+public export %inline rotL32, rotR32 : Bits32 -> Bits32 -> Bits32
+rotL32 x n = (x `prim__shl_Bits32` n) .|. (x `prim__shr_Bits32` (32 - n))
+rotR32 x n = (x `prim__shr_Bits32` n) .|. (x `prim__shl_Bits32` (32 - n))
+
+
+public export %inline rotL64, rotR64 : Bits64 -> Bits64 -> Bits64
+rotL64 x n = (x `prim__shl_Bits64` n) .|. (x `prim__shr_Bits64` (64 - n))
+rotR64 x n = (x `prim__shr_Bits64` n) .|. (x `prim__shl_Bits64` (64 - n))
+
+
+-- ----------------------------------------------------------------------------
+
 export feed8Of16 : HashAlgorithm algo _ _ => algo -> Bits16 -> algo
 feed8Of16 h k = feed8 (feed8 h $ cast k) $ cast $ k `shiftR` 8
 

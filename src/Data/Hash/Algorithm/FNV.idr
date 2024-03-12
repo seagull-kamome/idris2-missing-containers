@@ -1,3 +1,10 @@
+-- Implementation of FNV Hash Algorithm.
+--  See reference implementaion
+--      https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function
+--
+-- Copyright 2024, Hattori, Hiroki
+-- This file is released under the MIT license, see LICENSE for more detail.
+--
 module Data.Hash.Algorithm.FNV
 
 import public Data.Hash.Algorithm

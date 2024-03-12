@@ -1,10 +1,12 @@
 module Main
 
+import System.Info
 import Data.String
 import Data.IORef
 import Decidable.Equality
 import Data.Bits
 import Data.Container.IOHashMap
+import Data.Hash.Algorithm.FNV
 import Data.Hash.Algorithm.MurMur3
 import Data.Hash.Algorithm.OneAtATime
 import Data.Hash.Algorithm.Sip
@@ -51,12 +53,17 @@ go : List String -> (String -> IO ()) -> IO ()
 go [] _ = pure ()
 go (x::xs) f = f x >> go xs f
 
-
+benchmarkHash : HashAlgorithm a _ _ => String -> a -> List String -> IO ()
+benchmarkHash nm h words = do
+    t0 <- clockTime Monotonic
+    go words $ ignore . pure . hash h
+    t1 <- clockTime Monotonic
+    putStrLn $ "\{nm} : \{show $ timeDifference t1 t0}"
+ 
 partial
 benchmarkHashMap : IO ()
 benchmarkHashMap = do
   putStrLn "# benchmarkHashMap"
-  hm <- newIOHashMap (cast . hash (newSipHash 0 0)) -- (hash OneAtATime.empty)
   --
   dict <- do
     Right h <- openFile "test/input_large" Read
@@ -77,22 +84,29 @@ benchmarkHashMap = do
   putStrLn "words: \{show $ length words}"
 
   --
-  c <- newIORef 0
-  t0 <- clockTime Monotonic
-  go dict $ \x => do
-      n <- readIORef c
-      writeIORef c (S n)
-      ignore $ write hm x (show n)
-  t1 <- clockTime Monotonic
+  benchmarkHash "FNV1a" FNV.empty words
+  benchmarkHash "MurMur3" MurMur3.empty words
+  benchmarkHash "OneAtATime" OneAtATime.empty words
+  benchmarkHash "Sip64" (newSipHash64 0 0) words
+  benchmarkHash "Sip32" (newSipHash32 0 0) words
   --
-  t2 <- clockTime Monotonic
-  go words $ ignore . read hm
-  t3 <- clockTime Monotonic
+  -- hm <- newIOHashMap (hash OneAtATime.empty)
+  hm <- newIOHashMap (hash (newSipHash32 0 0))
+  do
+    c <- newIORef 0
+    t0 <- clockTime Monotonic
+    go dict $ \x => do
+        n <- readIORef c
+        writeIORef c (S n)
+        ignore $ write hm x (show n)
+    t1 <- clockTime Monotonic
+    putStrLn "write: \{show $ timeDifference t1 t0}/\{show $ length dict}"
   --
-  putStrLn $ """
-write: \{show $ timeDifference t1 t0}/\{show $ length dict}
-read: \{show $ timeDifference t3 t2}/\{show $ length words}
-"""
+  do
+    t0 <- clockTime Monotonic
+    go words $ ignore . read hm
+    t1 <- clockTime Monotonic
+    putStrLn "read: \{show $ timeDifference t1 t0}/\{show $ length words}"
   --
   pure ()
 
@@ -102,7 +116,10 @@ read: \{show $ timeDifference t3 t2}/\{show $ length words}
 partial
 main : IO ()
 main = do
-  putStrLn "Starting to test idris2-missing-containers"
+  putStrLn """
+Starting to test idris2-missing-containers
+codegen = \{System.Info.codegen}
+"""
   testHashMap
   benchmarkHashMap
   putStrLn "Done"

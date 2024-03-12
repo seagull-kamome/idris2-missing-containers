@@ -37,10 +37,11 @@ jobs:
       - run: idris2 --version
       - run: pack install-deps missing-containers
       - run: pack build missing-containers
-      - run: IDRIS2_CG=chez pack test  missing-containers
-      - run: IDRIS2_CG=refc IDRIS2_CC=gcc pack test  missing-containers
-      - run: IDRIS2_CG=refc IDRIS2_CC=clang-14 pack test  missing-containers
-      - run: IDRIS2_CG=refc IDRIS2_CC=clang-15 pack test  missing-containers
-      - run: IDRIS2_CG=node pack test  missing-containers
+      - run: pack --cg=chez test  missing-containers
+      - run: IDRIS2_CC=gcc pack --cg=refc test  missing-containers
+      - run: IDRIS2_CC=clang-14 pack --cg=refc test  missing-containers
+      - run: IDRIS2_CC=clang-15 pack --cg=refc test  missing-containers
+      - run: pack --cg=node test  missing-containers
+
       - run: pack install missing-containers
 
