@@ -6,6 +6,8 @@ Idris2で標準ライブラリに欠けているコンテナ類を提供する�
 
 ## APIS
 
+### Data.Container
+
 | module    | type       | description                     |
 |-----------|------------|---------------------------------|
 | IODArray  | IODArray   | Mutable Dependent-typed Array   |
@@ -14,5 +16,16 @@ Idris2で標準ライブラリに欠けているコンテナ類を提供する�
 | IOHashSet | IOHashSet  | Mutable HashSet                 |
 | IOIntMap  | IODIntMap  | Mutable Dependent-typed IntMap  |
 | IOIntMap  | IOIntMap   | Mutable IntMap                  |
+
+### Data.Hash.Algorithm
+
+| module     | type       | description                     |
+|------------|------------|---------------------------------|
+| FNV        | FNV1a      |                                 |
+| MurMur3    | MurMur3    |                                 |
+| OneAtATime | OneAtATime |                                 |
+| Sip        | SipHash32  |                                 |
+| Sip        | SipHash64  |                                 |
+
 
 
