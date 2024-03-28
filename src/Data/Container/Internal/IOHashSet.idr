@@ -47,19 +47,28 @@ newIOHashSet' hashfunc =
     root = !(primIO $ prim__newArray L0Width Nothing) }
 
 
+public export
+data HashSetAction : Type -> Type -> Type where
+  NoOp : r -> HashSetAction r t
+  Remove : r -> HashSetAction r t
+  InsertOrReplace : r -> t -> HashSetAction r t
+
+
 ||| IOHashSet の要素を検索し、削除,更新捜査を行います。
 |||
 ||| @k Search key
-||| @g 検索結果を受け取り、その後の処理方を返すコールバック関数
+||| @notfound 
+||| @found 検索結果を受け取り、その後の処理方を返すコールバック関数
 ||| @hs Target HashSet
 public export runIOHashSet : HasIO io => {0 r:Type} ->
   {0 tk:Type} -> {0 t:Type} ->
   IsHashSet' (IOHashSet' tk t) tk t =>
   (hs:IOHashSet' tk t) ->
   (k:tk) ->
-  (g:Maybe (x:t ** k = (keyfunc hs x)) -> io (Either r (r, Maybe t))) ->
+  (notfound:io (HashSetAction r t)) ->
+  (found:(x:t ** k = (keyfunc hs x)) -> io (HashSetAction r t)) ->
   io r
-runIOHashSet hs k g = do
+runIOHashSet hs k notfound found  = do
   let h = the Int $ cast $ hs.hashfunc k
   let ix0 = (h `div` L1Width) `mod` L0Width -- Index to L0
   let ix1 = h `mod` L1Width                 -- Index to L1
@@ -86,10 +95,10 @@ runIOHashSet hs k g = do
     --
     -- No entry found on L0
     Nothing => do
-      case !(g Nothing) of
-        Left r => pure r
-        Right (r, Nothing) => pure r
-        Right (r, Just v) => do       -- InsertOrUpdate
+      case !(notfound) of
+        NoOp r => pure r
+        Remove r => pure r
+        InsertOrReplace r v => do
           l1arr <- primIO $ prim__newArray L1Width []
           primIO $ prim__arraySet l1arr ix1 [v]
           primIO $ prim__arraySet hs.root ix0 (Just l1arr)
@@ -97,15 +106,15 @@ runIOHashSet hs k g = do
   where
     replaceL2 : List t -> io (r, Maybe (List t))
     replaceL2 [] = do
-      case !(g Nothing) of
-        Left r => pure (r, Nothing)                     -- NoOpr
-        Right (r, Nothing) => pure (r, Nothing)         -- Remove
-        Right (r, Just v)  => pure (r, Just [v]) -- InsertOrUpdate
+      case !(notfound) of
+        NoOp r => pure (r, Nothing)                -- NoOpr
+        Remove r => pure (r, Nothing)              -- Remove
+        InsertOrReplace r v  => pure (r, Just [v]) -- InsertOrUpdate
     replaceL2 xs@(x::xs') with (decEq k (keyfunc hs x))
-      _ | Yes prf = case !(g (Just (x ** prf))) of -- Found!
-        Left r => pure (r, Nothing)
-        Right (r, Nothing) => pure (r, Just xs')
-        Right (r, Just v) => pure (r, Just (v::xs'))
+      _ | Yes prf = case !(found (x ** prf)) of
+        NoOp r => pure (r, Nothing)
+        Remove r => pure (r, Just xs')
+        InsertOrReplace r v => pure (r, Just (v::xs'))
       _ | No _ = do
           (r, Just zs) <- replaceL2 xs'
             | r@(_, Nothing) => pure r

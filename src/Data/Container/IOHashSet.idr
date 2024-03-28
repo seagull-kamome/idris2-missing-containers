@@ -28,13 +28,15 @@ newIOHashSet hf = pure $ MkIOHashSet !(newIOHashSet' hf)
 
 
 public export %inline read: HasIO io => DecEq t => IOHashSet t -> t -> io Bool
-read hs k = runIOHashSet hs.table k (pure . Left . isJust)
+read hs k = runIOHashSet hs.table k (pure $ NoOp False) (\_ => pure $ NoOp True)
 
 public export %inline write: HasIO io => DecEq t => IOHashSet t -> t -> io Bool
-write hs k = runIOHashSet hs.table k (\x => pure $ Right (isJust x, Just k))
+write hs k = runIOHashSet hs.table k (pure $ InsertOrReplace False k)
+                                     (\_ => pure $ InsertOrReplace True k)
 
 public export %inline delete: HasIO io => DecEq t => IOHashSet t -> t -> io Bool
-delete hs k = runIOHashSet hs.table k (\x => pure $ Right (isJust x, Nothing))
+delete hs k = runIOHashSet hs.table k (pure $ Remove False)
+                                      (\_ => pure $ Remove True)
 
 public export %inline clear: HasIO io => IOHashSet t -> io ()
 clear hs = clear hs.table
@@ -61,3 +63,6 @@ except lhs rhs = filterIOHashSet lhs.table (read rhs >=> pure . not)
 public export %inline fold: HasIO io => DecEq t => 
   IOHashSet t -> (acc -> t -> io acc) -> acc -> io acc
 fold hm f acc = foldIOHashSet hm.table (\acc', e => pure (True, !(f acc' e))) acc
+
+
+

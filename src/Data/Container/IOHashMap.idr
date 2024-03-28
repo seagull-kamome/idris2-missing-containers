@@ -57,11 +57,10 @@ newIODHashMap hf = pure $ MkIODHashMap !(newIOHashSet' {tk=tk} hf)
 public export write: HasIO io =>
   {0 tk:Type} -> DecEq tk => {0 tv:tk -> Type} -> IODHashMap tk tv -> (k:tk) -> (v:tv k) ->
   io (Maybe (tv k))
-write hm k v = runIOHashSet hm.table k go where
-  go : Maybe (x ** (k = keyfunc hm.table x)) ->
-      io (Either (Maybe (tv k)) (Maybe (tv k), Maybe (k:tk ** tv k)))
-  go Nothing           = pure $ Right (Nothing, Just (k ** v))
-  go (Just (x ** prf)) = pure $ Right $ rewrite prf in (Just x.snd, Just (k ** v))
+write hm k v =
+  let kv = (k ** v)
+   in runIOHashSet hm.table k (pure $ InsertOrReplace Nothing kv)
+        (\(x ** prf) => pure $ InsertOrReplace (Just $ rewrite prf in x.snd) kv)
 
 
 ||| Lookup the HashMap
@@ -71,41 +70,38 @@ write hm k v = runIOHashSet hm.table k go where
 public export read: HasIO io =>
   {0 tk:Type} -> DecEq tk => {0 tv:tk -> Type} -> IODHashMap tk tv -> (k:tk) ->
   io (Maybe (tv k))
-read hm k = runIOHashSet hm.table k go where
-  go : Maybe (x ** (k = keyfunc hm.table x)) ->
-      io (Either (Maybe (tv k)) (Maybe (tv k), Maybe (k:tk ** tv k)))
-  go Nothing           = pure $ Left Nothing
-  go (Just (x ** prf)) = pure $ Left $ Just $ rewrite prf in x.snd
+read hm k = runIOHashSet hm.table k (pure $ NoOp Nothing)
+               (\(x ** prf) => pure $ NoOp $ Just $ rewrite prf in x.snd)
 
 
 ||| Remove key-value pair from HashMap
-|||
-|||
+||| @k is the key
+||| @retval Nothing means the key not found
+||| @retval Just x means key-value pair (k, x) has removed.
 public export delete: HasIO io =>
   {0 tk:Type} -> DecEq tk => {0 tv:tk -> Type} -> IODHashMap tk tv -> (k:tk) ->
     io (Maybe (tv k))
-delete hm k = runIOHashSet hm.table k go where
-  go : Maybe (x ** (k = keyfunc hm.table x)) ->
-      io (Either (Maybe (tv k)) (Maybe (tv k), Maybe (k:tk ** tv k)))
-  go Nothing           = pure $ Left Nothing
-  go (Just (x ** prf)) = pure $ Right $ rewrite prf in (Just x.snd, Nothing)
+delete hm k = runIOHashSet hm.table k (pure $ NoOp Nothing)
+                (\(x ** prf) => pure $ Remove (Just $ rewrite prf in x.snd))
 
-|||
-|||
-|||
+
+||| Update value of HashMap
+||| @k is the key.
+||| @g is callback function.
+||| @retval returns a value that callback returns.
 public export update: HasIO io =>
   {0 tk:Type} -> DecEq tk => {0 tv:tk -> Type} -> IODHashMap tk tv -> (k:tk) ->
   (Maybe (tv k) -> io (tr, Maybe (tv k))) ->
   io tr
-update hm k g = runIOHashSet hm.table k go where
-  go : Maybe (x ** (k = keyfunc hm.table x)) ->
-      io (Either tr (tr, Maybe (k:tk ** tv k)))
-  go Nothing           = pure $ case !(g Nothing) of
-    (r, Nothing) => Left r
-    (r, Just v') => Right (r, Just (k ** v'))
-  go (Just (x ** prf)) = pure $ case !(g (Just $ rewrite prf in x.snd)) of
-    (r, Nothing) => Right (r, Nothing)
-    (r, Just v') => Right (r, Just (k ** v'))
+update hm k g =
+  let f = \r, v' => InsertOrReplace r (k ** v')
+   in runIOHashSet hm.table k
+        (pure $ case !(g Nothing) of
+               (r, Nothing) => NoOp r
+               (r, Just v') => f r v')
+        (\(x ** prf) => pure $ case !(g (Just $ rewrite prf in x.snd)) of
+               (r, Nothing) => Remove r
+               (r, Just v') => f r v')
 
 
 ||| Update all elements of HashMap
