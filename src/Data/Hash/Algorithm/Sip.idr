@@ -59,7 +59,6 @@ HashAlgorithm SipHash64 False Bits64 where
   feed16 h x = feedSip64 h 2 $ cast x
   feed32 h x = feedSip64 h 4 $ cast x
   feed64 h x = feedSip64 h 8 $ cast x
-  feedString = feedCharOfString
   --
   finalize (MkSip64 l v0 v1 v2 v3) =
      let b : Bits64 = (cast l) `prim__shl_Bits64` 56
@@ -115,7 +114,6 @@ HashAlgorithm SipHash32 False Bits32 where
     let h32 = cast $ x `shiftR` 32
         l32 = cast x
      in feedSip32 (feedSip32 h 4 l32) 4 h32
-  feedString = feedCharOfString
   --
   finalize (MkSip32 l v0 v1 v2 v3) =
     let b : Bits32 = l `prim__shr_Bits32` 24

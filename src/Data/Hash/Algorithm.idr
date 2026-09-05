@@ -6,6 +6,7 @@
 module Data.Hash.Algorithm
 
 import Data.Bits
+import Data.String.Iterator
 
 %default total
 
@@ -21,7 +22,6 @@ interface HashAlgorithm (0 algo:Type) (0 crypt:Bool) (0 ty:Type) | algo where
   feed16 : algo -> Bits16 -> algo
   feed32 : algo -> Bits32 -> algo
   feed64 : algo -> Bits64 -> algo
-  feedString : algo -> String -> algo
 
 -- ----------------------------------------------------------------------------
 
@@ -38,7 +38,7 @@ public export
 Hashable Bool where
   feed h True = feed8 h 1
   feed h False = feed8 h 0
-public export Hashable Char where feed h x = feed8 h (cast x)
+public export Hashable Char where feed h x = feed32 h (cast x)
 public export Hashable Bits8 where feed = feed8
 public export Hashable Bits16 where feed = feed16
 public export Hashable Bits32 where feed = feed32
@@ -47,9 +47,8 @@ public export Hashable Int8 where feed h x = feed8 h (cast x)
 public export Hashable Int16 where feed h x = feed16 h (cast x)
 public export Hashable Int32 where feed h x = feed32 h (cast x)
 public export Hashable Int64 where feed h x = feed64 h (cast x)
-public export Hashable String where feed = feedString
+public export Hashable String where feed h xs = foldl (\h', x => feed32 h' (cast x)) h xs
 
--- Hashable Double where hashWithSalt = feedString
 public export
 Hashable Integer where
   feed h x = go x $ if x >= 0 then h else feed8 h 1 where
