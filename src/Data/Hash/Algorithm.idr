@@ -34,20 +34,21 @@ interface Hashable (0 a:Type) where
 
 infixl 8 `feed`
 
+%inline
 public export
 Hashable Bool where
   feed h True = feed8 h 1
   feed h False = feed8 h 0
-public export Hashable Char where feed h x = feed32 h (cast x)
-public export Hashable Bits8 where feed = feed8
-public export Hashable Bits16 where feed = feed16
-public export Hashable Bits32 where feed = feed32
-public export Hashable Bits64 where feed = feed64
-public export Hashable Int8 where feed h x = feed8 h (cast x)
-public export Hashable Int16 where feed h x = feed16 h (cast x)
-public export Hashable Int32 where feed h x = feed32 h (cast x)
-public export Hashable Int64 where feed h x = feed64 h (cast x)
-public export Hashable String where feed h xs = foldl (\h', x => feed32 h' (cast x)) h xs
+%inline public export Hashable Char where feed h x = feed32 h (cast x)
+%inline public export Hashable Bits8 where feed = feed8
+%inline public export Hashable Bits16 where feed = feed16
+%inline public export Hashable Bits32 where feed = feed32
+%inline public export Hashable Bits64 where feed = feed64
+%inline public export Hashable Int8 where feed h x = feed8 h (cast x)
+%inline public export Hashable Int16 where feed h x = feed16 h (cast x)
+%inline public export Hashable Int32 where feed h x = feed32 h (cast x)
+%inline public export Hashable Int64 where feed h x = feed64 h (cast x)
+%inline public export Hashable String where feed h xs = foldl (\h', x => feed32 h' (cast x)) h xs
 
 public export
 Hashable Integer where
@@ -74,9 +75,11 @@ public export hash : HashAlgorithm algo _ ty => Hashable a => algo -> a -> ty
 hash h a = finalize $ feed h a
 
 
+%inline
 public export
 Hashable Nat where feed h x = feed h $ cast {to=Integer} x
 
+%inline
 public export
 Traversable f => Hashable a => Hashable (f a) where
   feed h xs = foldl feed h xs

@@ -44,6 +44,7 @@ feed8' h l c x =
       else
         MkMurMur3 h l' ((c `shiftL` 8) .|. (cast x))
 
+%inline
 covering export
 HashAlgorithm MurMur3 False Bits32 where
   finalize (MkMurMur3 h l c) =

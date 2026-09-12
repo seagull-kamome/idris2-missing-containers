@@ -30,6 +30,7 @@ feed8' h x =
   let h' = h * 0x000001000000001b3
    in h' `xor` (cast {to=Bits64} x)
 
+%inline
 covering public export
 HashAlgorithm FNV1a False Bits64 where
   finalize (MkFNV1a h) = h

@@ -53,6 +53,7 @@ feedSip64 (MkSip64 l v0 v1 v2 v3) n x =
             in MkSip64 (l + n) v0'  v1' v2' v3'1
 
 
+%inline
 covering public export
 HashAlgorithm SipHash64 False Bits64 where
   feed8 h x  = feedSip64 h 1 $ cast x
@@ -105,6 +106,7 @@ feedSip32 (MkSip32 l v0 v1 v2 v3) n x =
                in MkSip32 (l + n) v0'2 v1'2 v2'2
                           (v3'2 `xor` (prim__shr_Bits32 x $ 32 - m))
 
+%inline
 covering public export
 HashAlgorithm SipHash32 False Bits32 where
   feed8 h x = feedSip32 h 1 $ cast x

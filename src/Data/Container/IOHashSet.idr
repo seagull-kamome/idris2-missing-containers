@@ -19,6 +19,7 @@ record IOHashSet t where
   constructor MkIOHashSet
   table: IOHashSet' t t
 
+%inline
 DecEq t => IsHashSet' (IOHashSet' t t) t t where
   keyfunc _ = id
 

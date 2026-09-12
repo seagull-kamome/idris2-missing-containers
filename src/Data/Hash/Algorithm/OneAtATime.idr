@@ -28,6 +28,7 @@ feed8' h k =
       h'' = h' + (h' `shiftR` 10)
    in h'' `xor` (h'' `shiftL` 6)
 
+%inline
 covering public export
 HashAlgorithm OneAtATime False Bits32 where
   finalize (MkOneAtATime h) =
