@@ -1,7 +1,7 @@
 -- Implimentation of mutable set of Int.
--- 
+--
 -- Copyright 2023, HATTORI, Hiroki
--- This file is released under the MIT license, see LICENSE for more detail.  
+-- This file is released under the MIT license, see LICENSE for more detail.
 --
 module Data.Container.IOIntSet
 
@@ -18,17 +18,17 @@ record IOIntSet where
   constructor MkIOIntSet
   table: IOIntMap Bits64
 
-public export newIOIntSet : HasIO io => io IOIntSet
+public export newIOIntSet : IO IOIntSet
 newIOIntSet = pure $ MkIOIntSet !(newIOIntMap {t=Bits64})
 
 
-public export read: HasIO io => IOIntSet -> (i:Int) -> io Bool
+public export read: IOIntSet -> (i:Int) -> IO Bool
 read im i = do
   Just j <- read im.table (i `div` 64) | Nothing => pure False
   pure $ (prim__and_Bits64 j (1 `prim__shl_Bits64` (cast $ i `mod` 64))) /= 0
 
 
-public export write : HasIO io => IOIntSet -> (i:Int) -> io Bool
+public export write : IOIntSet -> (i:Int) -> IO Bool
 write im i = update im.table (i `div` 64) $ (pure . go)
   where
     msk: Bits64
@@ -38,7 +38,7 @@ write im i = update im.table (i `div` 64) $ (pure . go)
     go (Just j) = ((j `prim__and_Bits64` msk) /= 0, Just (j `prim__or_Bits64` msk))
 
 
-public export delete : HasIO io => IOIntSet -> (i:Int) -> io Bool
+public export delete : IOIntSet -> (i:Int) -> IO Bool
 delete im i = update im.table (i `div` 64) $ (pure . go)
   where
     msk: Bits64
@@ -51,37 +51,36 @@ delete im i = update im.table (i `div` 64) $ (pure . go)
         then (True, Nothing)
         else (True, Just k)
 
-public export %inline clear: HasIO io => IOIntSet -> io ()
+public export %inline clear: IOIntSet -> IO ()
 clear is = clear is.table
 
-public export %inline count: HasIO io => IOIntSet -> io Int
+public export %inline count: IOIntSet -> IO Int
 count is = count is.table
 
-public export %inline toList: HasIO io => IOIntSet -> io (List Int)
+public export %inline toList: IOIntSet -> IO (List Int)
 toList is = fold is.table (\acc, x => pure $ acc ++ (map cast $ h $ snd x)) []
  where
    h: Bits64 -> List Bits64
    h x = filter (\i => prim__and_Bits64 x (prim__shl_Bits64 1 i) /= 0) $ the (List Bits64) [0..64]
 
-public export %inline union: HasIO io => IOIntSet -> IOIntSet -> io ()
+public export %inline union: IOIntSet -> IOIntSet -> IO ()
 union lhs rhs = fold rhs.table (\_, (i ** bits) =>
   update lhs.table i $ \case
     Just bits' => pure $ ((), Just $ prim__or_Bits64 bits bits')
     Nothing => pure ((), Just bits)) ()
 
-public export %inline intersect: HasIO io => IOIntSet -> IOIntSet -> io ()
+public export %inline intersect: IOIntSet -> IOIntSet -> IO ()
 intersect lhs rhs = fold rhs.table (\_, (i ** bits) =>
   update lhs.table i $ \case
     Just bits' => pure $ ((), Just $ prim__and_Bits64 bits bits')
     Nothing => pure ((), Nothing)) ()
 
-public export %inline except: HasIO io => IOIntSet -> IOIntSet -> io ()
+public export %inline except: IOIntSet -> IOIntSet -> IO ()
 except lhs rhs = fold rhs.table (\_, (i ** bits) =>
   update lhs.table i $ \case
     Just bits' => pure $ ((), Just $ prim__and_Bits64 bits $ prim__negate_Bits64 bits')
     Nothing => pure ((), Nothing)) ()
 
-public export %inline fold: HasIO io => IOIntSet -> (g:acc -> Int -> io acc) -> acc -> io acc
+public export %inline fold: IOIntSet -> (g:acc -> Int -> IO acc) -> acc -> IO acc
 fold is g acc = fold is.table (\acc', (i ** bits) => foldlM g acc' [i..(i+63)]) acc
-
 

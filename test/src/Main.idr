@@ -14,7 +14,7 @@ import Data.Hash.Algorithm.Sip
 import System.File
 import System.Clock
 
-assertEq : HasIO io => Eq a => (expected:a) -> (actual:a) -> io ()
+assertEq : Eq a => (expected:a) -> (actual:a) -> IO ()
 assertEq expected actual = do
   putStr $ if expected == actual then "✓" else "✗"
 

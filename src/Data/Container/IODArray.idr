@@ -20,19 +20,19 @@ namespace FixedSize
 
 
 
-  public export newIODArray : HasIO io => {f:Int -> Type} -> {size:Int} -> io (IODArray size f)
+  public export newIODArray : {f:Int -> Type} -> {size:Int} -> IO (IODArray size f)
   newIODArray {size=size} = pure $ MkIODArray !(primIO $ prim__newArray size Nothing)
 
-  public export writeIODArray : HasIO io =>
+  public export writeIODArray :
     {f: Int -> Type} -> (i:Int) -> (f i) -> IODArray size f ->
     {0 prf: So (i >= 0 && i < size)} ->
-    io ()
+    IO ()
   writeIODArray i v arr = primIO $ prim__arraySet arr.arraydata i (believe_me $ Just v)
 
-  public export readIODArray : HasIO io =>
+  public export readIODArray :
     {f: Int -> Type} -> (i:Int) -> IODArray size f ->
     {0 prf: So (i >= 0 && i < size)} ->
-    io (Maybe (f i))
+    IO (Maybe (f i))
   readIODArray i arr = primIO (prim__arrayGet arr.arraydata i) >>= pure . believe_me
 
   public export size : {size:Int} -> IODArray size f -> Int
@@ -58,19 +58,19 @@ namespace VariableSize
 
 
 
-  public export newIODArray : HasIO io => {f:Int -> Type} -> {size:Int} -> io (IODArray f)
+  public export newIODArray : {f:Int -> Type} -> {size:Int} -> IO (IODArray f)
   newIODArray {size=size} = pure $ MkIODArray size !(primIO $ prim__newArray size Nothing)
 
-  public export writeIODArray : HasIO io =>
+  public export writeIODArray :
     {f: Int -> Type} -> (i:Int) -> (f i) -> (arr:IODArray f) ->
     {0 prf: So (i >= 0 && i < arr.size)} ->
-    io ()
+    IO ()
   writeIODArray i v arr = primIO $ prim__arraySet arr.arraydata i (believe_me $ Just v)
 
-  public export readIODArray : HasIO io =>
+  public export readIODArray :
     {f: Int -> Type} -> (i:Int) -> (arr:IODArray f) ->
     {0 prf: So (i >= 0 && i < arr.size)} ->
-    io (Maybe (f i))
+    IO (Maybe (f i))
   readIODArray i arr = primIO (prim__arrayGet arr.arraydata i) >>= pure . believe_me
 
   public export size : IODArray f -> Int
@@ -78,6 +78,3 @@ namespace VariableSize
 
 
   -- TODO: copy, remove, resize
-
-
-

@@ -1,7 +1,7 @@
 -- Internal implimentations of sparse array based containers.
--- 
+--
 -- Copyright 2023, HATTORI, Hiroki
--- This file is released under the MIT license, see LICENSE for more detail.  
+-- This file is released under the MIT license, see LICENSE for more detail.
 --
 module Data.Container.Internal.IOHashSet
 
@@ -38,9 +38,9 @@ interface DecEq tk => IsHashSet' t tk tv | t where
   %inline keyfunc: (0 hs:t) -> tv -> tk
 
 
-public export newIOHashSet': HasIO io =>
+public export newIOHashSet':
   {0 tk:Type} -> (hashfunc: tk -> Bits32) ->
-  io (IOHashSet' tk t)
+  IO (IOHashSet' tk t)
 newIOHashSet' hashfunc =
   pure $ MkIOHashSet {
     hashfunc = hashfunc,
@@ -57,17 +57,17 @@ data HashSetAction : Type -> Type -> Type where
 ||| IOHashSet の要素を検索し、削除,更新捜査を行います。
 |||
 ||| @k Search key
-||| @notfound 
+||| @notfound
 ||| @found 検索結果を受け取り、その後の処理方を返すコールバック関数
 ||| @hs Target HashSet
-public export runIOHashSet : HasIO io => {0 r:Type} ->
+public export runIOHashSet : {0 r:Type} ->
   {0 tk:Type} -> {0 t:Type} ->
   IsHashSet' (IOHashSet' tk t) tk t =>
   (hs:IOHashSet' tk t) ->
   (k:tk) ->
-  (notfound:io (HashSetAction r t)) ->
-  (found:(x:t ** k = (keyfunc hs x)) -> io (HashSetAction r t)) ->
-  io r
+  (notfound:IO (HashSetAction r t)) ->
+  (found:(x:t ** k = (keyfunc hs x)) -> IO (HashSetAction r t)) ->
+  IO r
 runIOHashSet hs k notfound found  = do
   let h = the Int $ cast $ hs.hashfunc k
   let ix0 = (h `div` L1Width) `mod` L0Width -- Index to L0
@@ -104,7 +104,7 @@ runIOHashSet hs k notfound found  = do
           primIO $ prim__arraySet hs.root ix0 (Just l1arr)
           pure r
   where
-    replaceL2 : List t -> io (r, Maybe (List t))
+    replaceL2 : List t -> IO (r, Maybe (List t))
     replaceL2 [] = do
       case !(notfound) of
         NoOp r => pure (r, Nothing)                -- NoOpr
@@ -123,12 +123,12 @@ runIOHashSet hs k notfound found  = do
 
 -- --------------------------------------------------------------------------
 
-public export updateIOHashSet: HasIO io =>
+public export updateIOHashSet:
   {0 tk:Type} -> {0 t:Type} ->
   IsHashSet' (IOHashSet' tk t) tk t =>
   (hs:IOHashSet' tk t) ->
-  (visit: (orig:t) -> io ((new:t ** keyfunc hs orig = keyfunc hs new))) ->
-  io ()
+  (visit: (orig:t) -> IO ((new:t ** keyfunc hs orig = keyfunc hs new))) ->
+  IO ()
 updateIOHashSet hs visit = for_ [0..(L0Width - 1)] $ \ix0 => do
   Just l1arr <- primIO $ prim__arrayGet hs.root ix0
     | Nothing => pure ()
@@ -139,17 +139,17 @@ updateIOHashSet hs visit = for_ [0..(L0Width - 1)] $ \ix0 => do
 
 -- --------------------------------------------------------------------------
 
-public export clear: HasIO io => (hs:IOHashSet' tk t) -> io ()
+public export clear: (hs:IOHashSet' tk t) -> IO ()
 clear hs = for_ [0..(L0Width - 1)] $ \ix =>
   primIO $ prim__arraySet hs.root ix Nothing
 
 
 -- --------------------------------------------------------------------------
 
-public export filterIOHashSet: HasIO io =>
+public export filterIOHashSet:
   {0 tk:Type} -> {0 t:Type} ->
   IsHashSet' (IOHashSet' tk t) tk t =>
-  (hs:IOHashSet' tk t) -> (pred: t -> io Bool) -> io ()
+  (hs:IOHashSet' tk t) -> (pred: t -> IO Bool) -> IO ()
 filterIOHashSet hs pred = for_ [0..L0Width] $ \ix0 => do
   Just l1arr <- primIO $ prim__arrayGet hs.root ix0
     | Nothing => pure ()
@@ -160,19 +160,19 @@ filterIOHashSet hs pred = for_ [0..L0Width] $ \ix0 => do
 
 -- --------------------------------------------------------------------------
 
-public export foldIOHashSet: HasIO io => 
+public export foldIOHashSet:
   {0 tk:Type} -> {0 t:Type} ->
   (hs:IOHashSet' tk t) ->
-  (visit:acc -> t -> io (Bool, acc)) -> acc -> io acc
+  (visit:acc -> t -> IO (Bool, acc)) -> acc -> IO acc
 foldIOHashSet hs visit x = loop0 L0Width x
   where
-    loop2: List t -> acc -> io (Bool, acc)
+    loop2: List t -> acc -> IO (Bool, acc)
     loop2 [] x = pure (True, x)
     loop2 (y::ys) x = do
       (True, x') <- visit x y | (_, x') => pure (False, x')
       loop2 ys x'
 
-    loop1: ArrayData (List t) -> Int -> acc -> io (Bool, acc)
+    loop1: ArrayData (List t) -> Int -> acc -> IO (Bool, acc)
     loop1 _ 0 x = pure (True, x)
     loop1 l1arr ix1 x = do
         let ix = ix1 - 1
@@ -180,7 +180,7 @@ foldIOHashSet hs visit x = loop0 L0Width x
         (True, x') <- loop2 ys x | (_, x') => pure (False, x')
         assert_total $ loop1 l1arr ix1 x'
 
-    loop0: Int -> acc -> io acc
+    loop0: Int -> acc -> IO acc
     loop0 0 x = pure x
     loop0 ix0 x = do
         let ix = ix0 - 1
@@ -189,17 +189,17 @@ foldIOHashSet hs visit x = loop0 L0Width x
         (True, x') <- loop1 l1arr L1Width x | (_, x') => pure x'
         assert_total $ loop0 ix x'
 
-public export %inline count: HasIO io =>
-  (hs:IOHashSet' tk t) -> io Int
+public export %inline count:
+  (hs:IOHashSet' tk t) -> IO Int
 count hs = foldIOHashSet hs (\acc, _ => pure (True, acc + 1)) 0
 
 
-public export %inline keyList: HasIO io =>
- IsHashSet' (IOHashSet' tk t) tk t => (hs:IOHashSet' tk t) -> io (List tk)
+public export %inline keyList:
+ IsHashSet' (IOHashSet' tk t) tk t => (hs:IOHashSet' tk t) -> IO (List tk)
 keyList hs = foldIOHashSet hs (\acc, x => pure (True, keyfunc hs x::acc)) []
 
 
-public export %inline toList: HasIO io => (hs:IOHashSet' tk t) -> io (List t)
+public export %inline toList: (hs:IOHashSet' tk t) -> IO (List t)
 toList hs = foldIOHashSet hs (\acc, x => pure (True, x::acc)) []
 
 

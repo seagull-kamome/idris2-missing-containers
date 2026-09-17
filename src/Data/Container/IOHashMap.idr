@@ -1,7 +1,7 @@
 -- Implimentation of mutable dependent and independent type hash map.
--- 
+--
 -- Copyright 2023, HATTORI, Hiroki
--- This file is released under the MIT license, see LICENSE for more detail.  
+-- This file is released under the MIT license, see LICENSE for more detail.
 --
 module Data.Container.IOHashMap
 
@@ -35,8 +35,8 @@ record IODHashMap (tk:Type) (tv:tk -> Type) where
 
 ||| Create new IODHashMap with specified hash function.
 ||| @hf is hash function to calc. hash value of key.
-public export %inline newIODHashMap : HasIO io => DecEq tk =>
-  (hf:tk -> Bits32) -> io (IODHashMap tk tv)
+public export %inline newIODHashMap : DecEq tk =>
+  (hf:tk -> Bits32) -> IO (IODHashMap tk tv)
 newIODHashMap hf = pure $ MkIODHashMap !(newIOHashSet' {tk=tk} hf)
 
 
@@ -54,9 +54,9 @@ newIODHashMap hf = pure $ MkIODHashMap !(newIOHashSet' {tk=tk} hf)
 ||| @retval Nothing means the key-value pair has inserted.
 ||| @retval Just x means HashMap already has the key for value x,
 |||   and it has replaced now.
-public export write: HasIO io =>
+public export write:
   {0 tk:Type} -> DecEq tk => {0 tv:tk -> Type} -> IODHashMap tk tv -> (k:tk) -> (v:tv k) ->
-  io (Maybe (tv k))
+  IO (Maybe (tv k))
 write hm k v =
   let kv = (k ** v)
    in runIOHashSet hm.table k (pure $ InsertOrReplace Nothing kv)
@@ -67,9 +67,9 @@ write hm k v =
 ||| @k is the key
 ||| @retval Nothing means the key not found.
 ||| @retval Just x means found the key and x is an assosiate value.
-public export read: HasIO io =>
+public export read:
   {0 tk:Type} -> DecEq tk => {0 tv:tk -> Type} -> IODHashMap tk tv -> (k:tk) ->
-  io (Maybe (tv k))
+  IO (Maybe (tv k))
 read hm k = runIOHashSet hm.table k (pure $ NoOp Nothing)
                (\(x ** prf) => pure $ NoOp $ Just $ rewrite prf in x.snd)
 
@@ -78,9 +78,9 @@ read hm k = runIOHashSet hm.table k (pure $ NoOp Nothing)
 ||| @k is the key
 ||| @retval Nothing means the key not found
 ||| @retval Just x means key-value pair (k, x) has removed.
-public export delete: HasIO io =>
+public export delete:
   {0 tk:Type} -> DecEq tk => {0 tv:tk -> Type} -> IODHashMap tk tv -> (k:tk) ->
-    io (Maybe (tv k))
+    IO (Maybe (tv k))
 delete hm k = runIOHashSet hm.table k (pure $ NoOp Nothing)
                 (\(x ** prf) => pure $ Remove (Just $ rewrite prf in x.snd))
 
@@ -89,10 +89,10 @@ delete hm k = runIOHashSet hm.table k (pure $ NoOp Nothing)
 ||| @k is the key.
 ||| @g is callback function.
 ||| @retval returns a value that callback returns.
-public export update: HasIO io =>
+public export update:
   {0 tk:Type} -> DecEq tk => {0 tv:tk -> Type} -> IODHashMap tk tv -> (k:tk) ->
-  (Maybe (tv k) -> io (tr, Maybe (tv k))) ->
-  io tr
+  (Maybe (tv k) -> IO (tr, Maybe (tv k))) ->
+  IO tr
 update hm k g =
   let f = \r, v' => InsertOrReplace r (k ** v')
    in runIOHashSet hm.table k
@@ -107,31 +107,31 @@ update hm k g =
 ||| Update all elements of HashMap
 ||| @hm is the HashMap
 ||| @f is maping function
-public export updateAll: HasIO io => DecEq tk =>
-  IODHashMap tk tv -> (f:(k:tk) -> (tv k) -> io (tv k)) -> io ()
+public export updateAll: DecEq tk =>
+  IODHashMap tk tv -> (f:(k:tk) -> (tv k) -> IO (tv k)) -> IO ()
 updateAll hm f = updateIOHashSet hm.table $ \x =>
   pure ((fst x ** !(f (fst x) (snd x))) ** Refl)
 
 
 
 ||| Make the HashMap Empry.
-public export clear: HasIO io => IODHashMap tk tv -> io ()
+public export clear: IODHashMap tk tv -> IO ()
 clear hm = clear hm.table
 
 
 ||| Number of elements.
-public export %inline count: HasIO io => IODHashMap tk tv -> io Int
+public export %inline count: IODHashMap tk tv -> IO Int
 count hm = count hm.table
 
 
 ||| List of keys.
-public export %inline keyList: HasIO io =>
-  {0 tk:Type} -> DecEq tk => {0 tv:tk -> Type} -> IODHashMap tk tv -> io (List tk)
+public export %inline keyList:
+  {0 tk:Type} -> DecEq tk => {0 tv:tk -> Type} -> IODHashMap tk tv -> IO (List tk)
 keyList hm = keyList hm.table
 
 
 ||| List of elements.
-public export %inline toList: HasIO io => IODHashMap tk tv -> io (List (k:tk ** tv k))
+public export %inline toList: IODHashMap tk tv -> IO (List (k:tk ** tv k))
 toList hm = toList hm.table
 
 
@@ -143,23 +143,23 @@ toList hm = toList hm.table
 -- read' hm x = read hm (keyfunc hm.table x) >>= pure . isJust
 
 
-public export %inline union: HasIO io =>
+public export %inline union:
   {0 tk:Type} -> DecEq tk => {0 tv:tk -> Type} ->
-  IODHashMap tk tv -> IODHashMap tk tv -> io ()
+  IODHashMap tk tv -> IODHashMap tk tv -> IO ()
 union lhs rhs = foldIOHashSet rhs.table (\acc, x =>
   write lhs (fst x) (snd x) >>= \_ => pure (True, ())) ()
 
 
-public export %inline intersect: HasIO io =>
+public export %inline intersect:
   {0 tk:Type} -> DecEq tk => {0 tv, tv':tk -> Type} ->
-  IODHashMap tk tv -> IODHashMap tk tv' -> io ()
+  IODHashMap tk tv -> IODHashMap tk tv' -> IO ()
 intersect lhs rhs = filterIOHashSet lhs.table $
   \e => pure $ isJust !(read rhs (keyfunc lhs.table e))
 
 
-public export %inline except: HasIO io =>
+public export %inline except:
   {0 tk:Type} -> DecEq tk => {0 tv, tv':tk -> Type} ->
-  IODHashMap tk tv -> IODHashMap tk tv' -> io ()
+  IODHashMap tk tv -> IODHashMap tk tv' -> IO ()
 except lhs rhs = filterIOHashSet lhs.table $
   \e => pure $ isNothing !(read rhs (keyfunc lhs.table e))
 
@@ -167,9 +167,9 @@ except lhs rhs = filterIOHashSet lhs.table $
 ||| fold all elements into single value.
 ||| @f is accumulate function.
 ||| @acc is initial accumulator value.]
-public export %inline fold: HasIO io =>
+public export %inline fold:
   {0 tk:Type} -> DecEq tk => {0 tv:tk -> Type} ->
-  IODHashMap tk tv -> (f:acc -> (k:tk ** tv k) -> io acc) -> acc -> io acc
+  IODHashMap tk tv -> (f:acc -> (k:tk ** tv k) -> IO acc) -> acc -> IO acc
 fold hm f = foldIOHashSet hm.table $ \acc', e => pure (True, !(f acc' e))
 
 
@@ -181,11 +181,10 @@ fold hm f = foldIOHashSet hm.table $ \acc', e => pure (True, !(f acc' e))
 public export %inline IOHashMap : (tk:Type) -> (tv:Type) -> Type
 IOHashMap tk tv = IODHashMap tk (const tv)
 
-public export %inline newIOHashMap : HasIO io => DecEq tk =>
-  (hf:tk -> Bits32) -> io (IOHashMap tk tv)
+public export %inline newIOHashMap : DecEq tk =>
+  (hf:tk -> Bits32) -> IO (IOHashMap tk tv)
 newIOHashMap = newIODHashMap
 
 -- public export %inline newIOHashMap : HasIO io => Hashable tk => DecEq tk =>
 --   io (IOHashMap tk tv)
 -- newIOHashMap = newIODHashMap
-

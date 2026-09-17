@@ -8,17 +8,15 @@ module Data.Container.Internal.Interface
 namespace IODContainer
 
   interface IODContainer c tk tv | c where
-    read : HasIO io => c -> (k:tk) -> io (Maybe (tv k))
-    write : HasIO io => c -> (k:tk) -> (tv k) -> io (Maybe (tv k))
-    update : HasIO io => c -> (k:tk) -> (tv k) -> io (Maybe (tv k))
-    delete : HasIO io => c -> (k:tk) -> io (Maybe (tv k))
-    fold : HasIO io => c -> (acc -> (k:tk) -> (tv k) -> io (Bool, acc)) -> acc -> io acc
-    
+    read : c -> (k:tk) -> IO (Maybe (tv k))
+    write : c -> (k:tk) -> (tv k) -> IO (Maybe (tv k))
+    update : c -> (k:tk) -> (tv k) -> IO (Maybe (tv k))
+    delete : c -> (k:tk) -> IO (Maybe (tv k))
+    fold : c -> (acc -> (k:tk) -> (tv k) -> IO (Bool, acc)) -> acc -> IO acc
+
 namespace IOSet
 
   interface IOSet c tk | c where
-    read : HasIO io => c -> tk -> io Bool
-    wriite : HasIO io => c -> tk -> io Bool
-    delete : HasIO io => c-> tk -> io Bool
-
-
+    read : c -> tk -> IO Bool
+    wriite : c -> tk -> IO Bool
+    delete : c-> tk -> IO Bool
